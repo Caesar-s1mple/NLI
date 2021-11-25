@@ -194,6 +194,3 @@ def train(EPOCHS, batch_size, lr, full_fine_tuning=True, resume=False):
         # print("-----------------------------------------------------------------------------")
 
     log.info('-----Training Finished!-----')
-
-
-train(EPOCHS=10, batch_size=1, lr=3e-5)
