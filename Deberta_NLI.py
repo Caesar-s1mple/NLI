@@ -16,12 +16,14 @@ device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 
 def test(model=None, after_epoch=False):
+    log.info("-----Testing!-----")
     premise, hypothesis, labels = preprocess('./dataset/nyt10m_test.txt')
 
     tokenizer = DebertaTokenizer.from_pretrained('./deberta-large-mnli')
     dataset = NLIDataset(premise, hypothesis, labels, tokenizer, 256)
 
-    test_data_loader = DataLoader(dataset, batch_size=4)
+    test_data_loader = DataLoader(dataset, batch_size=1)
+    log.info("-----Dataloader Build!-----")
 
     if not after_epoch:
         model = Deberta_NLI.from_pretrained('./res/Deberta_NLI/best')
@@ -56,6 +58,8 @@ def test(model=None, after_epoch=False):
     log.info('Test-dataset:\n    precision: {:.2f}%  recall: {:.2f}%  f1: {:.2f}%'.format(metrics['precision'] * 100.,
                                                                                      metrics['recall'] * 100.,
                                                                                      metrics['f1'] * 100.))
+
+    log.info("-----Testing finished!-----")
 
 
 def evaluate(model, data_loader):

@@ -33,7 +33,8 @@ class NLIDataset(Dataset):
             attention_masks.append(attention_mask)
 
         for label in origin_labels:
-            labels.append([label2id[label]])
+            label_ids = fill_padding([label2id[label]], 1, 0)
+            labels.append(label_ids)
 
         return {
             'sentences': sentences,
