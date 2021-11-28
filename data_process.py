@@ -46,8 +46,8 @@ class NLIDataset(Dataset):
 
     def __getitem__(self, item):
         return {
-            'words': self.dataset['sentences'][item],
-            'attention_mask': self.dataset['attention_masks'][item],
+            'sentences': self.dataset['sentences'][item],
+            'attention_masks': self.dataset['attention_masks'][item],
             'labels': self.dataset['labels'][item]
         }
 
@@ -78,3 +78,33 @@ def preprocess(file):
             label_list.append("ENTAILMENT")
 
     return premise_list, hypothesis_list, label_list
+
+
+verbalizer = {
+    "/people/person/nationality": "{obj} is the nationality of {subj} .",
+    "/time/event/locations": "{subj} is located in {obj}",
+    "/people/person/children": "{obj} is the children of {subj}",
+    "/business/company/advisors": "",
+    "/business/location": "{subj} is located in {obj} .",
+    "/business/company/majorshareholders": "",
+    "/people/person/place_lived": "",
+    "NA": "{subj} and {obj} are not related .",
+    "/business/company/place_founded": "",
+    "/location/neighborhood/neighborhood_of": "",
+    "/people/deceasedperson/place_of_death": "{subj} died in {obj} .",
+    "/film/film/featured_film_locations": "",
+    "/location/region/capital": "{obj} is the capatial of {subj} .",
+    "/business/company/founders": "{subj} was founded by {obj} .",
+    "/people/ethnicity/geographic_distribution": "",
+    "/location/country/administrative_divisions": "",
+    "/people/deceasedperson/place_of_burial": "{subj} was burried in {obj} .",
+    "/location/country/capital": "{obj} is the capital of {subj} .",
+    "/business/person/company": "",
+    "/location/location/contains": "",
+    "/location/administrative_division/country": "",
+    "/location/us_county/county_seat": "",
+    "/people/person/religion": "{obj} is the religion of {subj} .",
+    "/people/person/place_of_birth": "{subj} was born in {obj} .",
+    "/people/person/ethnicity": ""
+}
+

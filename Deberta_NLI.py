@@ -4,7 +4,7 @@ from transformers import DebertaTokenizer, logging
 from transformers.utils.notebook import format_time
 from transformers.optimization import AdamW, get_cosine_schedule_with_warmup
 from torch.utils.data import DataLoader
-from convert import id2label
+from metrics import score
 import torch.nn as nn
 import numpy as np
 import torch
@@ -24,7 +24,7 @@ def test(model=None, after_epoch=False):
     test_data_loader = DataLoader(dataset, batch_size=4)
 
     if not after_epoch:
-        model = Deberta_NLI.from_pretrained('../res/BERT_MLP/best')
+        model = Deberta_NLI.from_pretrained('./res/Deberta_NLI/best')
         model.to(device)
 
     model.eval()
@@ -34,22 +34,18 @@ def test(model=None, after_epoch=False):
     with torch.no_grad():
         for batch in test_data_loader:
             sentences = batch['sentences'].to(device)
-            labels = batch['labels'].to(device)
-            attention_mask = batch['attention_mask'].to(device)
+            labels = batch['labels'].to(device).view(-1)
+            attention_mask = batch['attention_masks'].to(device)
 
             outputs = model(sentences, attention_mask=attention_mask, labels=labels, return_dict=True)
             loss = outputs['loss']
             total_test_loss += loss.item()
 
-            pred = np.argmax(outputs['logits'].detach().cpu().numpy(), axis=2)
-            tags = labels.to('cpu').numpy()
+            pred = np.argmax(outputs['logits'].detach().cpu().numpy(), axis=1)
+            tags = labels.cpu().numpy()
 
-            for i, indices in enumerate(pred):
-                pred_tags.extend([id2label.get(idx)
-                                  for idx in indices[: torch.count_nonzero(attention_mask[i]) - 2]])
-            for i, indices in enumerate(tags):
-                true_tags.extend([id2label.get(idx) if idx != -1 else 'O'
-                                  for idx in indices[: torch.count_nonzero(attention_mask[i]) - 2]])
+            pred_tags.extend(pred)
+            true_tags.extend(tags)
 
     assert len(pred_tags) == len(true_tags)
 
@@ -70,22 +66,18 @@ def evaluate(model, data_loader):
     with torch.no_grad():
         for batch in data_loader:
             sentences = batch['sentences'].to(device)
-            labels = batch['labels'].to(device)
-            attention_mask = batch['attention_mask'].to(device)
+            labels = batch['labels'].to(device).view(-1)
+            attention_mask = batch['attention_masks'].to(device)
 
             outputs = model(sentences, attention_mask=attention_mask, labels=labels, return_dict=True)
             loss = outputs['loss']
             total_loss += loss.item()
 
-            pred = np.argmax(outputs['logits'].detach().cpu().numpy(), axis=2)
-            tags = labels.to('cpu').numpy()
+            pred = np.argmax(outputs['logits'].detach().cpu().numpy(), axis=1)
+            tags = labels.cpu().numpy()
 
-            for i, indices in enumerate(pred):
-                pred_tags.extend([id2label.get(idx)
-                                  for idx in indices[: torch.count_nonzero(attention_mask[i]) - 2]])
-            for i, indices in enumerate(tags):
-                true_tags.extend([id2label.get(idx) if idx != -1 else 'O'
-                                  for idx in indices[: torch.count_nonzero(attention_mask[i]) - 2]])
+            pred_tags.extend(pred)
+            true_tags.extend(tags)
 
     assert len(pred_tags) == len(true_tags)
 
@@ -110,10 +102,10 @@ def train(EPOCHS, batch_size, lr, full_fine_tuning=True, resume=False):
     log.info("-----Dataloader Build!-----")
 
     if not resume:
-        model = Deberta_NLI.from_pretrained('./deberta')
+        model = Deberta_NLI.from_pretrained('./deberta-large-mnli')
     else:
-        log.info('-----Resume training from ./res/deberta/best!-----')
-        model = Deberta_NLI.from_pretrained('./res/deberta/best')
+        log.info('-----Resume training from ./res/Deberta_NLI/best!-----')
+        model = Deberta_NLI.from_pretrained('./res/Deberta_NLI/best')
     model.to(device)
 
     if full_fine_tuning:
@@ -149,8 +141,8 @@ def train(EPOCHS, batch_size, lr, full_fine_tuning=True, resume=False):
         model.train()
         for step, batch in enumerate(train_data_loader):
             sentences = batch['sentences'].to(device)
-            labels = batch['labels'].to(device)
-            attention_mask = batch['attention_mask'].to(device)
+            labels = batch['labels'].to(device).view(-1)
+            attention_mask = batch['attention_masks'].to(device)
 
             model.zero_grad()
             outputs = model(sentences, attention_mask=attention_mask, labels=labels, return_dict=True)
@@ -166,7 +158,7 @@ def train(EPOCHS, batch_size, lr, full_fine_tuning=True, resume=False):
                 log.info("epoch: {} step: {}/{}   {}".format(epoch, step, len(train_data_loader),
                                                                format_time(time.time() - t0)))
 
-        model.save_pretrained('../res/deberta/last')
+        model.save_pretrained('./res/Deberta_NLI/last')
 
         avg_train_loss = total_train_loss / len(train_data_loader)
         train_loss.append(avg_train_loss)
@@ -180,7 +172,7 @@ def train(EPOCHS, batch_size, lr, full_fine_tuning=True, resume=False):
 
         if val_metrics['f1'] > max_val_f1:
             max_val_f1 = val_metrics['f1']
-            model.save_pretrained('../res/deberta/best')
+            model.save_pretrained('./res/Deberta_NLI/best')
             log.info("-----Best Model Saved!-----")
 
         # print("-----------------------------------------------------------------------------")
