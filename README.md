@@ -4,9 +4,13 @@
 
   https://github.com/thunlp/OpenNRE/tree/master/benchmark
 
+  then place them into folder 'dataset'
+
 - download 'pytorch_model.bin' from
 
   https://huggingface.co/microsoft/deberta-large-mnli/tree/main
+
+  then place it into folder 'deberta-large-mnli'
 
 - start training as
 
