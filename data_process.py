@@ -18,7 +18,7 @@ class NLIDataset(Dataset):
         labels = []
         attention_masks = []
         for premise, hypothesis in zip(origin_premise, origin_hypothesis):
-            tokens = self.tokenizer("[CLS] " + premise + "[SEP] " + hypothesis + "[SEP]",
+            tokens = self.tokenizer("[CLS] " + premise + " [SEP] " + hypothesis + " [SEP]",
                                     add_special_tokens=False,
                                     return_input_ids=True,
                                     return_attention_mask=True)
@@ -68,19 +68,24 @@ def preprocess(file):
     hypothesis_list = []
     label_list = []
     relation_list = []
+    head_entities = []
+    tail_entities = []
     with open(file, 'r', encoding='utf-8') as f:
         for line in f.readlines():
             json_line = json.loads(line.strip())
             premise_list.append(json_line['text'])
             hypothesis_list.append(json_line['h']['name'] +
-                                   "is the" +
+                                   " is the " +
                                    json_line['relation'].split('/')[-1] +
-                                   "of" +
-                                   json_line['t']['name'])
+                                   " of " +
+                                   json_line['t']['name'] +
+                                   ' .')
             label_list.append("ENTAILMENT")
             relation_list.append(json_line['relation'])
+            head_entities.append(json_line['h'])
+            tail_entities.append(json_line['t'])
 
-    return premise_list, hypothesis_list, label_list, relation_list
+    return premise_list, hypothesis_list, label_list, relation_list, head_entities, tail_entities
 
 
 verbalizer = {

@@ -18,7 +18,7 @@ device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 def inferring(batch_size):
     print("-----Inferring!-----")
-    premise, hypothesis, labels, relations = preprocess('./dataset/nyt10m_train.txt')
+    premise, hypothesis, labels, relations, head_entities, tail_entities = preprocess('./dataset/nyt10m_train.txt')
 
     bag = {}
     for relation in relations:
@@ -33,34 +33,40 @@ def inferring(batch_size):
     model = Deberta_NLI.from_pretrained('./deberta-large-mnli')
     model.to(device)
 
+    f = open('res.txt', 'w', encoding='utf-8')
     model.eval()
+    t0 = time.time()
     with torch.no_grad():
         for step, batch in enumerate(data_loader):
             sentences = batch['sentences'].to(device)
             attention_mask = batch['attention_masks'].to(device)
 
             outputs = model(sentences, attention_mask=attention_mask, return_dict=True)
-
             # pred = np.argmax(outputs['logits'].detach().cpu().numpy(), axis=1)
 
-            entailment_scores = torch.softmax(outputs['logits'], dim=1)[:, 2]
+            entailment_scores = torch.softmax(outputs['logits'], dim=1)[:, 2].cpu().numpy().astype(float)
 
-            for i in range(len(batch)):
-                bag[relations[step * batch_size + i]].append({
-                    premise: premise[step * batch_size + i],
-                    hypothesis: hypothesis[step * batch_size + i],
-                    "scores": entailment_scores[i]
-                })
+            for i in range(len(batch['labels'])):
+                f.write(json.dumps({
+                    "premise": premise[step * batch_size + i],
+                    "hypothesis": hypothesis[step * batch_size + i],
+                    "scores": entailment_scores[i],
+                    "relation": relations[step * batch_size + i],
+                    "h": head_entities[step * batch_size + i],
+                    't': tail_entities[step * batch_size + i]
+                }) + '\n')
 
-    with open('bag_res.txt', 'w', encoding='utf-8') as f:
-        f.write(json.dumps(bag, ensure_ascii=False))
+            if step % (len(data_loader) // 9) == 0:
+                print("step: {}/{}   {}".format(step, len(data_loader), format_time(time.time() - t0)))
+
+    f.close()
 
     print("-----Inferring Finished!-----")
 
 
 def test(model=None, after_epoch=False):
     log.info("-----Testing!-----")
-    premise, hypothesis, labels = preprocess('./dataset/nyt10m_test.txt')
+    premise, hypothesis, labels, _, _, _ = preprocess('./dataset/nyt10m_test.txt')
 
     tokenizer = DebertaTokenizer.from_pretrained('./deberta-large-mnli')
     dataset = NLIDataset(premise, hypothesis, labels, tokenizer, 256)
@@ -136,8 +142,8 @@ def evaluate(model, data_loader):
 
 
 def train(EPOCHS, batch_size, lr, full_fine_tuning=True, resume=False):
-    premise_train, hypothesis_train, label_train = preprocess('./dataset/nyt10m_train.txt')
-    premise_val, hypothesis_val, label_val = preprocess('./dataset/nyt10m_val.txt')
+    premise_train, hypothesis_train, label_train, _, _, _ = preprocess('./dataset/nyt10m_train.txt')
+    premise_val, hypothesis_val, label_val, _, _, _ = preprocess('./dataset/nyt10m_val.txt')
 
     tokenizer = DebertaTokenizer.from_pretrained('./deberta-large-mnli')
     train_dataset = NLIDataset(premise_train, hypothesis_train, label_train, tokenizer, 256)
