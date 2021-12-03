@@ -9,10 +9,53 @@ import torch.nn as nn
 import numpy as np
 import torch
 import time
+import json
 import logging as log
 
 logging.set_verbosity_error()
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+
+
+def inferring(batch_size):
+    print("-----Inferring!-----")
+    premise, hypothesis, labels, relations = preprocess('./dataset/nyt10m_train.txt')
+
+    bag = {}
+    for relation in relations:
+        bag[relation] = []
+
+    tokenizer = DebertaTokenizer.from_pretrained('./deberta-large-mnli')
+    dataset = NLIDataset(premise, hypothesis, labels, tokenizer, 256)
+
+    data_loader = DataLoader(dataset, batch_size=batch_size)
+    print("-----Dataloader Build!-----")
+
+    model = Deberta_NLI.from_pretrained('./deberta-large-mnli')
+    model.to(device)
+
+    model.eval()
+    with torch.no_grad():
+        for step, batch in enumerate(data_loader):
+            sentences = batch['sentences'].to(device)
+            attention_mask = batch['attention_masks'].to(device)
+
+            outputs = model(sentences, attention_mask=attention_mask, return_dict=True)
+
+            # pred = np.argmax(outputs['logits'].detach().cpu().numpy(), axis=1)
+
+            entailment_scores = torch.softmax(outputs['logits'], dim=1)[:, 2]
+
+            for i in range(len(batch)):
+                bag[relations[step * batch_size + i]].append({
+                    premise: premise[step * batch_size + i],
+                    hypothesis: hypothesis[step * batch_size + i],
+                    "scores": entailment_scores[i]
+                })
+
+    with open('bag_res.txt', 'w', encoding='utf-8') as f:
+        f.write(json.dumps(bag, ensure_ascii=False))
+
+    print("-----Inferring Finished!-----")
 
 
 def test(model=None, after_epoch=False):
@@ -59,7 +102,7 @@ def test(model=None, after_epoch=False):
                                                                                      metrics['recall'] * 100.,
                                                                                      metrics['f1'] * 100.))
 
-    log.info("-----Testing finished!-----")
+    log.info("-----Testing Finished!-----")
 
 
 def evaluate(model, data_loader):

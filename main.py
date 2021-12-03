@@ -15,6 +15,7 @@ if __name__ == '__main__':
     parser.add_argument('--policy', type=str)
     parser.add_argument('--lr', type=float, default=3e-5)
     parser.add_argument('--only-test', nargs='?', const=True, default=False)
+    parser.add_argument('--only-infer', nargs='?', const=True, default=False)
     args = parser.parse_args()
 
     if args.policy not in ['Deberta_NLI']:
@@ -22,6 +23,10 @@ if __name__ == '__main__':
         exit(0)
 
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+
+    if args.only_infer:
+        eval(args.policy + '.inferring(batch_size={})'.format(args.batch_size))
+        exit(0)
 
     logger = log.getLogger()
     logger.setLevel(log.INFO)

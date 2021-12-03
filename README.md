@@ -23,12 +23,10 @@
 
   
 
-- if you just want to test, place all files in folder 'deberta-large-mnli' into 'res/Deberta_NLI/best', then do as following
+- if you just want to do inferring, you can do as following
 
   ```
   python main.py --policy Deberta_NLI
-  	       --only-test
+  	       --only-infer
   ```
-
-  
 

@@ -67,18 +67,20 @@ def preprocess(file):
     premise_list = []
     hypothesis_list = []
     label_list = []
+    relation_list = []
     with open(file, 'r', encoding='utf-8') as f:
         for line in f.readlines():
             json_line = json.loads(line.strip())
             premise_list.append(json_line['text'])
             hypothesis_list.append(json_line['h']['name'] +
                                    "is the" +
-                                   json_line['relation'] +
+                                   json_line['relation'].split('/')[-1] +
                                    "of" +
                                    json_line['t']['name'])
             label_list.append("ENTAILMENT")
+            relation_list.append(json_line['relation'])
 
-    return premise_list, hypothesis_list, label_list
+    return premise_list, hypothesis_list, label_list, relation_list
 
 
 verbalizer = {
