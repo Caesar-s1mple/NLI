@@ -24,18 +24,18 @@ if __name__ == '__main__':
 
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
+    if not os.path.exists('./res'):
+        os.makedirs('./res')
+
     if args.only_infer:
         eval(args.policy + '.inferring(batch_size={})'.format(args.batch_size))
         exit(0)
 
-    logger = log.getLogger()
-    logger.setLevel(log.INFO)
-
-    if not os.path.exists('./res'):
-        os.makedirs('./res')
-
     if not os.path.exists('./res/' + args.policy):
         os.makedirs('./res/' + args.policy)
+
+    logger = log.getLogger()
+    logger.setLevel(log.INFO)
 
     file_handler = log.FileHandler('./res/' + args.policy + '/train.log')
     file_handler.setFormatter(log.Formatter('%(asctime)s:%(levelname)s: %(message)s'))

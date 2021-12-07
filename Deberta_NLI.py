@@ -33,7 +33,7 @@ def inferring(batch_size):
     model = Deberta_NLI.from_pretrained('./deberta-large-mnli')
     model.to(device)
 
-    f = open('res.txt', 'w', encoding='utf-8')
+    f = open('./res/res.txt', 'w', encoding='utf-8')
     model.eval()
     t0 = time.time()
     with torch.no_grad():
@@ -42,7 +42,6 @@ def inferring(batch_size):
             attention_mask = batch['attention_masks'].to(device)
 
             outputs = model(sentences, attention_mask=attention_mask, return_dict=True)
-            # pred = np.argmax(outputs['logits'].detach().cpu().numpy(), axis=1)
 
             entailment_scores = torch.softmax(outputs['logits'], dim=1)[:, 2].cpu().numpy().astype(float)
 
@@ -50,13 +49,13 @@ def inferring(batch_size):
                 f.write(json.dumps({
                     "premise": premise[step * batch_size + i],
                     "hypothesis": hypothesis[step * batch_size + i],
-                    "scores": entailment_scores[i],
+                    "score": entailment_scores[i],
                     "relation": relations[step * batch_size + i],
                     "h": head_entities[step * batch_size + i],
                     't': tail_entities[step * batch_size + i]
                 }) + '\n')
 
-            if step % (len(data_loader) // 9) == 0:
+            if step % 500 == 0:
                 print("step: {}/{}   {}".format(step, len(data_loader), format_time(time.time() - t0)))
 
     f.close()

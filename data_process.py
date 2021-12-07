@@ -74,12 +74,7 @@ def preprocess(file):
         for line in f.readlines():
             json_line = json.loads(line.strip())
             premise_list.append(json_line['text'])
-            hypothesis_list.append(json_line['h']['name'] +
-                                   " is the " +
-                                   json_line['relation'].split('/')[-1] +
-                                   " of " +
-                                   json_line['t']['name'] +
-                                   ' .')
+            hypothesis_list.append(verbalizer[json_line['relation']].format(subj=json_line['h']['name'], obj=json_line['t']['name']))
             label_list.append("ENTAILMENT")
             relation_list.append(json_line['relation'])
             head_entities.append(json_line['h'])
@@ -89,30 +84,30 @@ def preprocess(file):
 
 
 verbalizer = {
-    "/people/person/nationality": "{obj} is the nationality of {subj} .",
-    "/time/event/locations": "{subj} is located in {obj}",
+    "/people/person/nationality": "{subj}'s nationality is {obj} .",
+    "/time/event/locations": "{subj} happens in {obj} .",
     "/people/person/children": "{obj} is the children of {subj}",
-    "/business/company/advisors": "",
-    "/business/location": "{subj} is located in {obj} .",
-    "/business/company/majorshareholders": "",
-    "/people/person/place_lived": "",
-    "NA": "{subj} and {obj} are not related .",
-    "/business/company/place_founded": "",
-    "/location/neighborhood/neighborhood_of": "",
-    "/people/deceasedperson/place_of_death": "{subj} died in {obj} .",
-    "/film/film/featured_film_locations": "",
-    "/location/region/capital": "{obj} is the capatial of {subj} .",
-    "/business/company/founders": "{subj} was founded by {obj} .",
-    "/people/ethnicity/geographic_distribution": "",
-    "/location/country/administrative_divisions": "",
-    "/people/deceasedperson/place_of_burial": "{subj} was burried in {obj} .",
+    "/business/company/advisors": "{obj} is the advisors of {subj} .",
+    "/business/location": "{obj} is the location of {subj} .",
+    "/business/company/majorshareholders": "{obj} is the major shareholders of {subj}",
+    "/people/person/place_lived": "{subj} lives in {obj}",
+    "NA": "There's no relationship between {obj} and {subj} .",
+    "/business/company/place_founded": "{obj} is the founded place of {subj} .",
+    "/location/neighborhood/neighborhood_of": "{obj} is the neighborhood of {subj} .",
+    "/people/deceasedperson/place_of_death": "{obj} is the place of death of {subj} .",
+    "/film/film/featured_film_locations": "{obj} is the featured film location of {subj} .",
+    "/location/region/capital": "{obj} is the capital of {subj} .",
+    "/business/company/founders": "{obj} is the founder of {subj} .",
+    "/people/ethnicity/geographic_distribution": "{obj} is the geographic distribution of {subj} .",
+    "/location/country/administrative_divisions": "{subj} is the administrative division of {obj} .",
+    "/people/deceasedperson/place_of_burial": "{obj} is the place of burial of {subj} .",
     "/location/country/capital": "{obj} is the capital of {subj} .",
-    "/business/person/company": "",
-    "/location/location/contains": "",
-    "/location/administrative_division/country": "",
-    "/location/us_county/county_seat": "",
-    "/people/person/religion": "{obj} is the religion of {subj} .",
-    "/people/person/place_of_birth": "{subj} was born in {obj} .",
-    "/people/person/ethnicity": ""
+    "/business/person/company": "{subj} works in {obj} .",
+    "/location/location/contains": "{obj} is located in {subj} .",
+    "/location/administrative_division/country": "{subj} is the administrative division of {obj} .",
+    "/location/us_county/county_seat": "{obj} is the country seat of {subj} in America .",
+    "/people/person/religion": "{subj} believes in {obj} .",
+    "/people/person/place_of_birth": "{obj} is the birthplace of {subj} .",
+    "/people/person/ethnicity": "{obj} is the ethnicity of {subj} ."
 }
 

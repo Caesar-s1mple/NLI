@@ -1,5 +1,15 @@
+#env
 .idea
-dataset/
-deberta-large-mnli/pytorch_model.bin
-res.txt
+
+#dataset
+dataset/*
+
+#model and exp
+*.bin
+
+#output
+res/*
+
+#other
 __pycache__
+*.pyc
