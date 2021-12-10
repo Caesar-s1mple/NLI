@@ -10,6 +10,9 @@ dataset/*
 #output
 res/*
 
+#temp_file
+tmp.*
+
 #other
 __pycache__
 *.pyc
